@@ -10,9 +10,10 @@ using namespace std;
 struct HuffChar{
 	char ch;
 	int weight;
-	HuffChar* lc;HuffChar*rc;HuffChar* prt;
-
-	HuffChar(char c,int w):ch(c),weight(w){};
+	char* code;
+	bool sig;
+	HuffChar* lc;HuffChar* rc;
+	HuffChar(char c,int w):ch(c),weight(w),sig(true),lc(NULL),rc(NULL){};
 };
 
 bool operator< (HuffChar const& hc1,HuffChar const& hc2){return hc1.weight > hc2.weight;}
@@ -20,6 +21,14 @@ bool operator==(HuffChar const& hc1,HuffChar const& hc2){return hc1.weight == hc
 priority_queue<HuffChar*> pq; //huffchars ranked according to frequency(weight)
 map <char,int> ch_frqc;
 map <char,int>::iterator it;
+
+void tra_encode(HuffChar* p){
+	if(!p) return;
+	if(p->sig)p->code+='0';
+	tra_encode(p->lc);
+	if(p->sig)p->code+='1';
+	tra_encode(p->rc);
+}
 
 void naiveCopy(string inputFilename, string outputFilename) {
 	ofstream ofs(outputFilename.c_str(), ios::out | ios::binary);
@@ -36,12 +45,17 @@ void naiveCopy(string inputFilename, string outputFilename) {
 		HuffChar* hc=new HuffChar(it->first,it->second);
 		pq.push(hc);
 	}
+	ch_frqc.clear();
 	while(pq.size()>1){
 		HuffChar* a=pq.top();pq.pop();
 		HuffChar* b=pq.top();pq.pop();
 		HuffChar* sum=new HuffChar('^',a->weight+b->weight);
+		sum->lc=a;sum->rc=b;
 		pq.push(sum);
 	}
+	HuffChar* top=pq.top();
+	top->sig=false;
+	tra_encode(top);
 	ofs.close();
 	ifs.close();
 }
